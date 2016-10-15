@@ -27,3 +27,11 @@
 *.exe
 *.out
 *.app
+
+# Visual Studio
+/vs/.vs
+/vs/Debug
+/vs/Release
+*.db
+*.opendb
+*.user
