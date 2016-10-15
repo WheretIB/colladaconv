@@ -1,2 +1,2 @@
 # colladaconv
-Just some COLLADA converter into binary represenation
+Just some COLLADA converter into binary representation.
