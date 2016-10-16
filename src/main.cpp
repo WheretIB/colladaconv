@@ -1652,6 +1652,7 @@ void SaveGeometry(char* folderNameOut)
 		else
 			LogOptional("  Saving static geometry %s\r\n", source->name);
 
+		target.version = 1;
 		target.formatComponents = withController ? 6 : 4;
 		target.vertexCount = source->VB.size();
 		target.vertexSize = withController ? sizeof(Vertex) + 12 : sizeof(Vertex);
