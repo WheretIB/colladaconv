@@ -313,9 +313,10 @@ void LoadGeometryLibrary()
 		}
 
 		pugi::xml_node triangles = geom.child("mesh").child("triangles");
-		bool polyList = false;
+
 		if(!triangles)
 			triangles = geom.child("mesh").child("polylist");
+
 		assert(triangles);
 
 		unsigned inputsCount = 0;
@@ -360,23 +361,46 @@ void LoadGeometryLibrary()
 			}
 		}
 
-		geometry.indCount = triangles.attribute("count").as_int() * 3;
+		pugi::xpath_node_set nodeSet = geom.child("mesh").select_nodes("./triangles | ./polylist");
+		nodeSet.sort();
+
+		// Collect total count
+		unsigned totalCount = 0;
+
+		for(pugi::xpath_node_set::const_iterator node = nodeSet.begin(); node != nodeSet.end(); node++)
+		{
+			totalCount += node->node().attribute("count").as_int() * 3;
+		}
+
+		geometry.indCount = totalCount;
 		geometry.indices = new IndexGroup[geometry.indCount];
 		memset(geometry.indices, 0, geometry.indCount * sizeof(IndexGroup));
 		IndexGroup *targetArr = geometry.indices;
 
 		assert(inputsCount <= sizeof(geometry.indices[0].indData) / sizeof(geometry.indices[0].indData[0]));
 
-		const char *rawArr = triangles.child_value("p");
-		for(unsigned i = 0, e = geometry.indCount; i != e; i++)
+		unsigned lastPos = 0;
+
+		for(pugi::xpath_node_set::const_iterator node = nodeSet.begin(); node != nodeSet.end(); node++)
 		{
-			for(unsigned n = 0; n < inputsCount; n++)
+			const char *rawArr = node->node().child_value("p");
+
+			while(*rawArr)
 			{
-				while((unsigned)*rawArr <= ' ')
-					rawArr++;
-				rawArr = fastatoui(rawArr, targetArr[i].indData[n]);
+				for(unsigned n = 0; n < inputsCount; n++)
+				{
+					while((unsigned)*rawArr <= ' ')
+						rawArr++;
+
+					assert(lastPos < geometry.indCount);
+					rawArr = fastatoui(rawArr, targetArr[lastPos].indData[n]);
+				}
+
+				lastPos++;
 			}
 		}
+
+		assert(lastPos == geometry.indCount && "Coulndn't parse all <triangles> data");
 	}
 }
 
