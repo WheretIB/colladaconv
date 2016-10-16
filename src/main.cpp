@@ -863,8 +863,12 @@ void LoadAnimationLibrary()
 
 struct WeightBone
 {
-	float weight = 0.0f;
-	int bone = 0;
+	WeightBone(): weight(0.0f), bone(0)
+	{
+	}
+
+	float weight;
+	int bone;
 };
 
 void LoadControllerLibrary()

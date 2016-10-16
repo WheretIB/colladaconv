@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="pugixml">
+      <UniqueIdentifier>{46141c2e-55e2-4bcc-9161-db4cc21b41bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="simplemath">
+      <UniqueIdentifier>{23c65a7b-b433-4d5b-a4b0-0907586558ce}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simplemath\aabb.h">
+      <Filter>simplemath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simplemath\frustum.h">
+      <Filter>simplemath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simplemath\matrix.h">
+      <Filter>simplemath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simplemath\plane.h">
+      <Filter>simplemath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simplemath\quat.h">
+      <Filter>simplemath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\simplemath\vector.h">
+      <Filter>simplemath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pugixml\src\pugiconfig.hpp">
+      <Filter>pugixml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pugixml\src\pugixml.hpp">
+      <Filter>pugixml</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\saver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pugixml\src\pugixml.cpp">
+      <Filter>pugixml</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

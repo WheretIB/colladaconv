@@ -58,13 +58,24 @@ const uint32_t MaxStreams = 16u;
 
 struct StreamInfo
 {
-	const char *name = nullptr;
+	StreamInfo()
+	{
+		name = nullptr;
 
-	uint32_t count = 0;
-	uint32_t stride = 0;
-	uint32_t indexOffset = 0;
+		count = 0;
+		stride = 0;
+		indexOffset = 0;
 
-	float *data = nullptr;
+		data = nullptr;
+	}
+
+	const char *name;
+
+	uint32_t count;
+	uint32_t stride;
+	uint32_t indexOffset;
+
+	float *data;
 };
 
 class DAEGeometry
@@ -72,6 +83,12 @@ class DAEGeometry
 public:
 	DAEGeometry()
 	{
+		ID = nullptr;
+		name = nullptr;
+
+		indices = nullptr;
+		indCount = 0;
+
 		std::fill(streamLink.begin(), streamLink.end(), ~0u);
 	}
 
@@ -81,14 +98,14 @@ public:
 			delete[] streams[i].data;
 	}
 
-	const char *ID = nullptr;
-	const char *name = nullptr;
+	const char *ID;
+	const char *name;
 
 	std::array<StreamInfo, MaxStreams> streams;
 	std::array<uint32_t, ST_COUNT> streamLink;
 
-	IndexGroup *indices = nullptr;
-	uint32_t indCount = 0;
+	IndexGroup *indices;
+	uint32_t indCount;
 
 	std::vector<Vertex> VB;
 	std::vector<uint16_t> IB;
@@ -109,8 +126,13 @@ enum DAETransformType
 
 struct DAETransform
 {
+	DAETransform()
+	{
+		sid = nullptr;
+	}
+
 	DAETransformType type;
-	const char *sid = nullptr;
+	const char *sid;
 
 	float data[16];
 };
@@ -119,32 +141,60 @@ typedef DAETransform DAETransformBlock[8];
 
 struct DAENode
 {
-	const char *ID = nullptr;
-	const char *name = nullptr;
-	const char *sid = nullptr;
+	DAENode()
+	{
+		ID = nullptr;
+		name = nullptr;
+		sid = nullptr;
+		
+		tCount = 0;
+		
+		geometryID = ~0u;
+		parentNodeID = ~0u;
+		controllerID = ~0u;
+		skeletonID = ~0u;
+		effectID = ~0u;
+		
+		childCount = 0;
+		isJoint = false;
+		isSkeletonRoot = false;
+	}
+
+	const char *ID;
+	const char *name;
+	const char *sid;
 
 	DAETransformBlock tForm;
-	uint32_t tCount = 0;
+	uint32_t tCount;
 	mat4 model;
 
-	uint32_t geometryID = ~0u;
-	uint32_t parentNodeID = ~0u;
-	uint32_t controllerID = ~0u;
-	uint32_t skeletonID = ~0u;
-	uint32_t effectID = ~0u;
+	uint32_t geometryID;
+	uint32_t parentNodeID;
+	uint32_t controllerID;
+	uint32_t skeletonID;
+	uint32_t effectID;
 
-	uint32_t childCount = 0;
-	bool isJoint = false;
-	bool isSkeletonRoot = false;
+	uint32_t childCount;
+	bool isJoint;
+	bool isSkeletonRoot;
 };
 
 struct DAESkeleton
 {
-	const char *rootName = nullptr;
-	uint32_t controllerID = ~0u;
+	DAESkeleton()
+	{
+		rootName = nullptr;
+
+		controllerID = ~0u;
+
+		jointCount = 0;
+	}
+
+	const char *rootName;
+	uint32_t controllerID;
 
 	mat4 bindShapeMat;
-	uint32_t jointCount = 0;
+	uint32_t jointCount;
 	std::array<uint32_t, 256> nodeIDs;
 	std::array<mat4, 256> bindMat;
 };
