@@ -581,13 +581,13 @@ void CreateIBVB()
 #if defined(EXPORT_BINORMALS)
 				if(g->streamLink[ST_TANGENT] != 0)
 				{
-					v.binormal[0] = short(*(dataArrs[3] + indData[indices[3]]*strides[3]) * 32767);
-					v.binormal[1] = short(*(dataArrs[3] + indData[indices[3]]*strides[3] + 1) * 32767);
-					v.binormal[2] = short(*(dataArrs[3] + indData[indices[3]]*strides[3] + 2) * 32767);
+					v.binormal[0] = short(*(dataArrs[3] + indData[indices[3]] * strides[3]) * 32767);
+					v.binormal[1] = short(*(dataArrs[3] + indData[indices[3]] * strides[3] + 1) * 32767);
+					v.binormal[2] = short(*(dataArrs[3] + indData[indices[3]] * strides[3] + 2) * 32767);
 
-					v.tangent[0] = short(*(dataArrs[4] + indData[indices[4]]*strides[4]) * 32767);
-					v.tangent[1] = short(*(dataArrs[4] + indData[indices[4]]*strides[4] + 1) * 32767);
-					v.tangent[2] = short(*(dataArrs[4] + indData[indices[4]]*strides[4] + 2) * 32767);
+					v.tangent[0] = short(*(dataArrs[4] + indData[indices[4]] * strides[4]) * 32767);
+					v.tangent[1] = short(*(dataArrs[4] + indData[indices[4]] * strides[4] + 1) * 32767);
+					v.tangent[2] = short(*(dataArrs[4] + indData[indices[4]] * strides[4] + 2) * 32767);
 				}
 #endif
 			}
