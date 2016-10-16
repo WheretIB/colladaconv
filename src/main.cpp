@@ -1849,16 +1849,30 @@ int main(unsigned argc, char** argv)
 		char temp[512];
 		strcpy(temp, argv[i]);
 
+		for(unsigned k = 0, ke = strlen(temp); k < ke; k++)
+		{
+			if(temp[k] == '\\')
+				temp[k] = '/';
+		}
+
 		char *folder = temp;
 
 		char* spos1 = strrchr(folder, '/');
 
 		if(spos1)
+		{
 			*spos1 = 0;
+			spos1++;
+		}
+		else
+		{
+			folder = ".";
+			spos1 = temp;
+		}
 
 		char newName[512];
 
-		sprintf(newName, "%s/%s", folder, spos1 + 1);
+		sprintf(newName, "%s/%s", folder, spos1);
 
 		char* cpos1 = strrchr(newName, '.');
 		memcpy(cpos1 + 1, "bmi", 3);
