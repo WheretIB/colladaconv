@@ -396,6 +396,7 @@ void SaveNode(char* fileNameOut, unsigned nodeID, Context &global)
 	delete[] aabbState;
 
 	unsigned materialCount = local.effects.size();
+	fwrite(&materialCount, 4, 1, fOut);
 
 	for(unsigned i = 0; i < local.effects.size(); i++)
 	{
