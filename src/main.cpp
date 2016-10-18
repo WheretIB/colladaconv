@@ -1003,8 +1003,15 @@ void LoadControllerLibrary()
 		curr.exWeights = new short[curr.vcountCount * 4];
 		curr.bounds = new aabb[curr.joints->count];
 
-		bool *accessed = new bool[curr.joints->count];
-		memset(accessed, 0, sizeof(bool) * curr.joints->count);
+		curr.isJointActive = new bool[curr.joints->count];
+		memset(curr.isJointActive, 0, sizeof(bool) * curr.joints->count);
+
+		curr.activeJointCount = 0;
+		curr.activeJointIDs = new unsigned[curr.joints->count];
+		memset(curr.activeJointIDs, 0, sizeof(unsigned) * curr.joints->count);
+
+		curr.jointRemap = new unsigned[curr.joints->count];
+		memset(curr.jointRemap, 0, sizeof(unsigned) * curr.joints->count);
 
 		for(unsigned n = 0; n < curr.joints->count; n++)
 		{
@@ -1067,7 +1074,7 @@ void LoadControllerLibrary()
 			// sized used as maximum
 			for(unsigned k = 0; k < curr.vcountData[n]; k++)
 			{
-				accessed[curr.vData[indSaved + k * 2]] = true;
+				curr.isJointActive[curr.vData[indSaved + k * 2]] = true;
 
 				vec3 &min = curr.bounds[curr.vData[indSaved + k * 2]].center;
 				vec3 &max = curr.bounds[curr.vData[indSaved + k * 2]].size;
@@ -1089,19 +1096,43 @@ void LoadControllerLibrary()
 			}
 		}
 
+		// Collect active joints
 		for(unsigned n = 0; n < curr.joints->count; n++)
 		{
-			if(!accessed[n])
-				curr.bounds[n].center = curr.bounds[n].size = vec3(0, 0, 0);
+			if(curr.isJointActive[n])
+			{
+				unsigned target = curr.activeJointCount;
 
-			vec3 min = curr.bounds[n].center;
-			vec3 max = curr.bounds[n].size;
+				curr.jointRemap[n] = curr.activeJointCount;
+				curr.activeJointIDs[target] = n;
 
-			curr.bounds[n].center = (min + max) / 2.0;
-			curr.bounds[n].size = (max - min) / 2.0;
+				vec3 min = curr.bounds[n].center;
+				vec3 max = curr.bounds[n].size;
+
+				curr.bounds[target].center = (min + max) / 2.0;
+				curr.bounds[target].size = (max - min) / 2.0;
+
+				curr.activeJointCount++;
+			}
+			else
+			{
+				curr.jointRemap[n] = ~0u;
+			}
 		}
 
-		delete[] accessed;
+		LogOptional("\tController %d has %d active joints out of %d\r\n", i, curr.activeJointCount, curr.joints->count);
+
+		// Remap references
+		for(unsigned n = 0; n < curr.vcountCount; n++)
+		{
+			curr.exIndices[n * 4 + 0] = curr.jointRemap[curr.exIndices[n * 4 + 0]];
+			curr.exIndices[n * 4 + 1] = curr.jointRemap[curr.exIndices[n * 4 + 1]];
+			curr.exIndices[n * 4 + 2] = curr.jointRemap[curr.exIndices[n * 4 + 2]];
+			curr.exIndices[n * 4 + 3] = curr.jointRemap[curr.exIndices[n * 4 + 3]];
+		}
+
+		for(unsigned n = 0; n < curr.vcountCount * 4; n++)
+			assert(curr.exIndices[n] != ~0u);
 	}
 }
 
@@ -1347,7 +1378,7 @@ bool LoadScene()
 				LogOptional("Controller %s doesn't have a skeleton reference\r\n", targetName);
 
 			newSkeleton.controllerID = newNode.controllerID;
-			newSkeleton.jointCount = global.contrls[newNode.controllerID]->joints->count;
+			newSkeleton.jointCount = global.contrls[newNode.controllerID]->activeJointCount;
 			newSkeleton.rootName = skeleton.child_value() + 1;
 			newNode.skeletonID = unsigned(global.skeletons.size());
 
@@ -1383,7 +1414,11 @@ bool LoadScene()
 		// Find every joint position after root node
 		for(unsigned n = 0; n < cSkel.jointCount; n++)
 		{
-			char* targetName = global.contrls[cSkel.controllerID]->joints->dataName[n];
+			DAEController *controller = global.contrls[cSkel.controllerID];
+
+			unsigned jointID = controller->activeJointIDs[n];
+
+			char* targetName = controller->joints->dataName[jointID];
 
 			unsigned subID = nodeID;
 
@@ -1399,8 +1434,8 @@ bool LoadScene()
 			cSkel.nodeIDs[n] = subID;
 			LogOptional("Skeleton %d, found joint %s at %d\r\n", i, targetName, subID);
 
-			cSkel.bindShapeMat = global.contrls[cSkel.controllerID]->bindMat;
-			cSkel.bindMat[n] = mat4(&global.contrls[cSkel.controllerID]->binds->dataFloat[n * 16]).transpose() * cSkel.bindShapeMat;
+			cSkel.bindShapeMat = controller->bindMat;
+			cSkel.bindMat[n] = mat4(&controller->binds->dataFloat[jointID * 16]).transpose() * cSkel.bindShapeMat;
 		}
 	}
 

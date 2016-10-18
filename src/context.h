@@ -146,15 +146,15 @@ struct DAENode
 		ID = nullptr;
 		name = nullptr;
 		sid = nullptr;
-		
+
 		tCount = 0;
-		
+
 		geometryID = ~0u;
 		parentNodeID = ~0u;
 		controllerID = ~0u;
 		skeletonID = ~0u;
 		effectID = ~0u;
-		
+
 		childCount = 0;
 		isJoint = false;
 		isSkeletonRoot = false;
@@ -256,7 +256,14 @@ struct DAEController
 	uint32_t vCount;			// Index of the bone and weight index for every bone of every vertex
 	int32_t *vData;			// Corresponding data
 
-	aabb *bounds;
+	bool	*isJointActive; // If joint accessed
+
+	// How many joints are actually accessed and what are they
+	unsigned	activeJointCount;
+	unsigned	*activeJointIDs;
+	unsigned	*jointRemap;
+
+	aabb		*bounds; // For active joints
 
 	// Export data
 	int16_t *exWeights;	// 4 weight per vertex. Normalized value
