@@ -369,7 +369,30 @@ void LoadGeometryLibrary()
 
 		for(pugi::xpath_node_set::const_iterator node = nodeSet.begin(); node != nodeSet.end(); node++)
 		{
-			totalCount += node->node().attribute("count").as_int() * 3;
+			auto t = node->node();
+
+			if(strcmp(t.name(), "polylist") == 0)
+			{
+				unsigned count = node->node().attribute("count").as_uint();
+
+				const char *counts = t.child_value("vcount");
+
+				for(unsigned i = 0; i < count; i++)
+				{
+					while((unsigned)*counts <= ' ')
+						counts++;
+
+					unsigned value = 0;
+
+					counts = fastatoui(counts, value);
+
+					totalCount += (value - 2) * 3;
+				}
+			}
+			else
+			{
+				totalCount += node->node().attribute("count").as_int() * 3;
+			}
 		}
 
 		geometry.indCount = totalCount;
@@ -383,20 +406,64 @@ void LoadGeometryLibrary()
 
 		for(pugi::xpath_node_set::const_iterator node = nodeSet.begin(); node != nodeSet.end(); node++)
 		{
-			const char *rawArr = node->node().child_value("p");
+			auto t = node->node();
 
-			while(*rawArr)
+			if(strcmp(t.name(), "polylist") == 0)
 			{
-				for(unsigned n = 0; n < inputsCount; n++)
+				unsigned count = node->node().attribute("count").as_uint();
+
+				const char *counts = t.child_value("vcount");
+				const char *rawArr = t.child_value("p");
+
+				for(unsigned i = 0; i < count; i++)
 				{
-					while((unsigned)*rawArr <= ' ')
-						rawArr++;
+					while((unsigned)*counts <= ' ')
+						counts++;
 
-					assert(lastPos < geometry.indCount);
-					rawArr = fastatoui(rawArr, targetArr[lastPos].indData[n]);
+					unsigned value = 0;
+
+					counts = fastatoui(counts, value);
+
+					std::array<IndexGroup, 16> groups;
+
+					for(unsigned i = 0; i < value; i++)
+					{
+						for(unsigned n = 0; n < inputsCount; n++)
+						{
+							while((unsigned)*rawArr <= ' ')
+								rawArr++;
+
+							rawArr = fastatoui(rawArr, groups[i].indData[n]);
+						}
+					}
+
+					for(unsigned i = 0; i < value - 2; i++)
+					{
+						assert(lastPos + 3 <= geometry.indCount);
+
+						targetArr[lastPos++] = groups[0];
+						targetArr[lastPos++] = groups[1 + i];
+						targetArr[lastPos++] = groups[2 + i];
+					}
 				}
+			}
+			else
+			{
+				const char *rawArr = t.child_value("p");
 
-				lastPos++;
+				while(*rawArr)
+				{
+					for(unsigned n = 0; n < inputsCount; n++)
+					{
+						while((unsigned)*rawArr <= ' ')
+							rawArr++;
+
+						assert(lastPos < geometry.indCount);
+						rawArr = fastatoui(rawArr, targetArr[lastPos].indData[n]);
+					}
+
+					lastPos++;
+				}
 			}
 		}
 
