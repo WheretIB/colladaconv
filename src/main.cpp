@@ -1649,8 +1649,8 @@ bool LoadScene()
 					assert(outTangent->stride == outStride * 2 && inTangent->stride == outStride * 2);
 					vec4 c(
 						outValues[anim.lastSample * outStride + n - anim.compOffset],
-						outTangent->dataFloat[anim.lastSample * outTangent->stride + n - anim.compOffset + 1],
-						inTangent->dataFloat[(anim.lastSample + 1) * inTangent->stride + n - anim.compOffset + 1],
+						outTangent->dataFloat[anim.lastSample * outTangent->stride + (n - anim.compOffset) * 2 + 1],
+						inTangent->dataFloat[(anim.lastSample + 1) * inTangent->stride + (n - anim.compOffset) * 2 + 1],
 						outValues[(anim.lastSample + 1) * outStride + n - anim.compOffset]
 					);
 					tempCopy[anim.targetNodePos].block[targetPart].data[n] = dot(s, c);
