@@ -1652,7 +1652,7 @@ bool LoadScene()
 	{
 		LogPrint("Sampling animation in a period of [%f, %f] with a %f second step\r\n", startTime, longestAnim, step);
 
-		sampleCount = int(longestAnim / step + 1);
+		sampleCount = int((longestAnim - startTime) / step + 1);
 
 		result = new mat4[idleMat.size() * sampleCount];
 
