@@ -1725,6 +1725,9 @@ bool LoadScene()
 	unsigned sampleCount = 0;
 	mat4 *result = NULL;
 
+	if(startTime < 0.0)
+		startTime = 0.0;
+
 	if(startTime < longestAnim)
 	{
 		LogPrint("Sampling animation in a period of [%f, %f] with a %f second step\r\n", startTime, longestAnim, step);
