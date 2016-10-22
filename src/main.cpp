@@ -1690,6 +1690,9 @@ bool LoadScene()
 			if(anim.targetSID == NULL)
 				continue;
 
+			if(strcmp(anim.targetSID, "visibility") == 0)
+				continue;
+
 			unsigned targetPart = -1;
 
 			for(unsigned k = 0; k < tempCopy[anim.targetNodePos].count; k++)
