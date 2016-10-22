@@ -766,7 +766,6 @@ void CreateIBVB()
 DAESource ParseSource(pugi::xml_node source, bool specialCaseNameArray = false)
 {
 	DAESource src;
-	memset(&src, 0, sizeof(DAESource));
 
 	src.ID = source.attribute("id").value();
 	src.count = source.child("technique_common").child("accessor").attribute("count").as_int();
@@ -833,10 +832,11 @@ DAESource ParseSource(pugi::xml_node source, bool specialCaseNameArray = false)
 	}
 	else if(source.child("float_array"))
 	{
-		src.dataFloat = new float[src.count * src.stride];
+		src.dataFloat.resize(src.count * src.stride);
 
 		const char *rawArr = source.child_value("float_array");
-		float *target = src.dataFloat;
+
+		auto &target = src.dataFloat;
 
 		for(unsigned i = 0; i < src.count * src.stride; i++)
 		{
@@ -1083,9 +1083,9 @@ void LoadControllerLibrary()
 		assert(curr.joints == FindSource(skin.select_single_node("vertex_weights/input[@semantic='JOINT']/@source").attribute().value(), curr.sources.data(), curr.sourceCount));
 		curr.weights = FindSource(skin.select_single_node("vertex_weights/input[@semantic='WEIGHT']/@source").attribute().value(), curr.sources.data(), curr.sourceCount);
 
-		assert(curr.binds && curr.binds->dataFloat && curr.binds->stride == 16);
+		assert(curr.binds && !curr.binds->dataFloat.empty() && curr.binds->stride == 16);
 		assert(curr.joints && curr.joints->dataName && curr.joints->stride == 1);
-		assert(curr.weights && curr.weights->dataFloat && curr.weights->stride == 1);
+		assert(curr.weights && !curr.weights->dataFloat.empty() && curr.weights->stride == 1);
 
 		pugi::xml_node weights = skin.child("vertex_weights");
 		assert(weights);
@@ -1630,9 +1630,9 @@ bool LoadScene()
 			anim->targetNodePos = found;
 		}
 
-		LogOptional("Animation (%s) for node (%s) at position %d\r\n", anim->ID, anim->targetNode, anim->targetNodePos);
+		auto &inTime = anim->inSource->dataFloat;
 
-		float *inTime = anim->inSource->dataFloat;
+		LogOptional("Animation (%s) for node (%s) at %d (%f-%f)\r\n", anim->ID, anim->targetNode, anim->targetNodePos, inTime.front(), inTime.back());
 
 		startTime = startTime < inTime[0] ? startTime : inTime[0];
 		longestAnim = longestAnim > inTime[anim->dataCount - 1] ? longestAnim : inTime[anim->dataCount - 1];
@@ -1643,12 +1643,12 @@ bool LoadScene()
 	TransformBlock *tempCopy = new TransformBlock[idleMat.size()];
 	mat4 *targetMat = new mat4[idleMat.size()];
 
-	double step = 1.0 / 30.0, currTime = startTime;
+	double step = 1.0 / 30.0;
 
 	unsigned sampleCount = 0;
 	mat4 *result = NULL;
 
-	if(currTime < longestAnim)
+	if(startTime < longestAnim)
 	{
 		LogPrint("Sampling animation in a period of [%f, %f] with a %f second step\r\n", startTime, longestAnim, step);
 
@@ -1659,10 +1659,14 @@ bool LoadScene()
 		LogPrint("Result size is %d (%d bytes)\r\n", sampleCount, sizeof(mat4) * idleMat.size() * sampleCount);
 	}
 
+	std::vector<float> dummySource;
+
 	unsigned frame = 0;
 
-	while(currTime < longestAnim)
+	while(startTime + frame * step < longestAnim)
 	{
+		double currTime = startTime + frame * step;
+
 		// copy idle transformation
 		memcpy(tempCopy, &idleMat[0], sizeof(TransformBlock) * idleMat.size());
 
@@ -1671,8 +1675,8 @@ bool LoadScene()
 		{
 			DAEAnimation &anim = *anims[i];
 
-			float *inTime = anim.inSource ? anim.inSource->dataFloat : NULL;
-			float *outValues = anim.outSource ? anim.outSource->dataFloat : NULL;
+			auto inTime = anim.inSource ? anim.inSource->dataFloat : dummySource;
+			auto outValues = anim.outSource ? anim.outSource->dataFloat : dummySource;
 
 			DAESource *inTangent = anim.inTangentSource;
 			DAESource *outTangent = anim.outTangentSource;
@@ -1680,11 +1684,21 @@ bool LoadScene()
 			while(anim.lastSample < anim.dataCount - 1 && inTime[anim.lastSample + 1] < currTime)
 				anim.lastSample++;
 
-			double mix = (currTime - inTime[anim.lastSample]) / (inTime[anim.lastSample + 1] - inTime[anim.lastSample]);
+			double mix = 0.0;
+			
+			if(anim.lastSample + 1 < inTime.size())
+			{
+				mix = (currTime - inTime[anim.lastSample]) / (inTime[anim.lastSample + 1] - inTime[anim.lastSample]);
+			}
+			else
+			{
+				// At the end of the animation, sample the last segment at the end points
+				anim.lastSample--;
+				mix = 1.0;
+			}
 
-			// If the animation is over
-			if(mix > 1.0)
-				continue;	// Skip to the next
+			if(mix < 0.0)
+				mix = 0.0;
 
 			// Ill-formed animation?
 			if(anim.targetSID == NULL)
@@ -1794,8 +1808,6 @@ bool LoadScene()
 			result[frame * idleMat.size() + i] = targetMat[i];
 
 		frame++;
-
-		currTime += step;
 	}
 
 	global.matrixAnimation = result;

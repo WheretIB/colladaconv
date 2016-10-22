@@ -210,11 +210,25 @@ enum Interpolation
 
 struct DAESource
 {
+	DAESource()
+	{
+		ID = 0;
+
+		dataNameBlob = 0;
+
+		dataName = 0;
+
+		count = 0;
+		stride = 1;
+	}
+
 	const char *ID;
 
 	char *dataNameBlob;
+	
 	char **dataName;
-	float *dataFloat;
+
+	std::vector<float> dataFloat;
 
 	uint32_t count;
 	uint32_t stride;
