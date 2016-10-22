@@ -38,11 +38,13 @@ void SaveNode(char* fileNameOut, unsigned nodeID, Context &global)
 	std::vector<unsigned> effectRedirection;
 
 	for(unsigned i = 0; i < global.nodes.size(); i++)
-	{
 		parentRedirection.push_back(~0u);
+
+	for(unsigned i = 0; i < global.skeletons.size(); i++)
 		skeletonRedirection.push_back(~0u);
+
+	for(unsigned i = 0; i < global.effects.size(); i++)
 		effectRedirection.push_back(~0u);
-	}
 
 	// Filter nodes and node data of interest
 	std::vector<unsigned> allowedRoots;
