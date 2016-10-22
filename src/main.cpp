@@ -895,13 +895,23 @@ void LoadAnimationLibrary()
 	{
 		const pugi::xml_node animation = node->node();
 
-		LogOptional("Loading animation \"%s\"\r\n", animation.attribute("id").value());
+		auto animName = animation;
+
+		while(animName.parent() && strcmp(animName.parent().name(), "animation") == 0)
+		{
+			if(animName.attribute("id"))
+				break;
+
+			animName = animName.parent();
+		}
+		
+		LogOptional("Loading animation \"%s\"\r\n", animName.attribute("id").value());
 
 		anims.push_back(new DAEAnimation());
 		DAEAnimation &last = *anims.back();
 		memset(&last, 0, sizeof(DAEAnimation));
 
-		last.ID = animation.attribute("id").value();
+		last.ID = animName.attribute("id").value();
 
 		last.targetNode = strdup(animation.attribute("target").value());
 		char *dividerPos = strchr(last.targetNode, '/');
