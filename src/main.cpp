@@ -1584,6 +1584,7 @@ bool LoadScene()
 
 	std::vector<TransformBlock> idleMat;
 
+	double startTime = 1e6;
 	double longestAnim = 0.0;
 
 	for(unsigned i = 0; i < anims.size(); i++)
@@ -1632,24 +1633,38 @@ bool LoadScene()
 		LogOptional("Animation (%s) for node (%s) at position %d\r\n", anim->ID, anim->targetNode, anim->targetNodePos);
 
 		float *inTime = anim->inSource->dataFloat;
+
+		startTime = startTime < inTime[0] ? startTime : inTime[0];
 		longestAnim = longestAnim > inTime[anim->dataCount - 1] ? longestAnim : inTime[anim->dataCount - 1];
+
 		anim->lastSample = 0;
 	}
 
 	TransformBlock *tempCopy = new TransformBlock[idleMat.size()];
 	mat4 *targetMat = new mat4[idleMat.size()];
 
-	double startTime = 0.0, step = 1.0 / 30.0, currTime = startTime;
-	LogPrint("Sampling animation in a period of [0.0, %f] with a %f second step\r\n", longestAnim, step);
+	double step = 1.0 / 30.0, currTime = startTime;
 
-	mat4 *result = new mat4[idleMat.size()*int(longestAnim / step + 1)];
-	LogPrint("Result size is %d\r\n", sizeof(mat4) * idleMat.size()*int(longestAnim / step + 1));
+	unsigned sampleCount = 0;
+	mat4 *result = NULL;
+
+	if(currTime < longestAnim)
+	{
+		LogPrint("Sampling animation in a period of [%f, %f] with a %f second step\r\n", startTime, longestAnim, step);
+
+		sampleCount = int(longestAnim / step + 1);
+
+		result = new mat4[idleMat.size() * sampleCount];
+
+		LogPrint("Result size is %d (%d bytes)\r\n", sampleCount, sizeof(mat4) * idleMat.size() * sampleCount);
+	}
+
 	unsigned frame = 0;
 
 	while(currTime < longestAnim)
 	{
 		// copy idle transformation
-		memcpy(tempCopy, &idleMat[0], sizeof(TransformBlock)*idleMat.size());
+		memcpy(tempCopy, &idleMat[0], sizeof(TransformBlock) * idleMat.size());
 
 		// now, every animation will make changes to transformation state
 		for(unsigned i = 0; i < anims.size(); i++)
@@ -1769,6 +1784,8 @@ bool LoadScene()
 				targetMat[i] *= tempTransform;
 			}
 		}
+
+		assert(frame < sampleCount);
 
 		for(unsigned i = 0; i < idleMat.size(); i++)
 			result[frame * idleMat.size() + i] = targetMat[i];
