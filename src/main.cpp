@@ -7,6 +7,8 @@
 #include <cassert>
 
 #include <algorithm>
+#include <string>
+#include <map>
 #include <unordered_map>
 
 #include "../pugixml/src/pugixml.hpp"
@@ -188,13 +190,49 @@ void LoadMaterialLibrary()
 	{
 		for(pugi::xml_node fx = libImages.child("effect"); fx; fx = fx.next_sibling("effect"))
 		{
+			std::map<std::string, std::string> surfaceMap;
+			std::map<std::string, std::string> samplerMap;
+
+			auto common = fx.child("profile_COMMON");
+
+			// Collect surface and sampler redirections
+			for(pugi::xml_node param = common.child("newparam"); param; param = param.next_sibling("newparam"))
+			{
+				if(auto surface = param.child("surface"))
+					surfaceMap[param.attribute("sid").value()] = surface.child_value("init_from");
+
+				if(auto sampler2D = param.child("sampler2D"))
+					samplerMap[param.attribute("sid").value()] = sampler2D.child_value("source");
+			}
+
 			DAEEffect effect;
 
 			effect.ID = fx.attribute("id").value();
 			effect.name = fx.attribute("name").value();
 
-			auto diffuseColor = fx.child("profile_COMMON").child("technique").child("phong").child("diffuse").child("texture").attribute("texture").value();
-			auto diffuseAlpha = fx.child("profile_COMMON").child("technique").child("phong").child("transparent").child("texture").attribute("texture").value();
+			const char *diffuseColor = "";
+			const char *diffuseAlpha = "";
+
+			if(auto phong = common.child("technique").child("phong"))
+			{
+				diffuseColor = phong.child("diffuse").child("texture").attribute("texture").value();
+				diffuseAlpha = phong.child("transparent").child("texture").attribute("texture").value();
+			}
+			else if(auto lambert = common.child("technique").child("lambert"))
+			{
+				diffuseColor = lambert.child("diffuse").child("texture").attribute("texture").value();
+				diffuseAlpha = lambert.child("transparent").child("texture").attribute("texture").value();
+			}
+			else if(auto blinn = common.child("technique").child("blinn"))
+			{
+				diffuseColor = blinn.child("diffuse").child("texture").attribute("texture").value();
+				diffuseAlpha = blinn.child("transparent").child("texture").attribute("texture").value();
+			}
+			else if(auto constant = common.child("technique").child("constant"))
+			{
+				diffuseColor = constant.child("diffuse").child("texture").attribute("texture").value();
+				diffuseAlpha = constant.child("transparent").child("texture").attribute("texture").value();
+			}
 
 			effect.diffuseColor = ~0u;
 
@@ -202,6 +240,25 @@ void LoadMaterialLibrary()
 			{
 				if(strcmp(global.images[i].ID, diffuseColor) == 0)
 					effect.diffuseColor = i;
+			}
+
+			if(effect.diffuseColor == ~0u)
+			{
+				auto it = samplerMap.find(diffuseColor);
+
+				if(it != samplerMap.end())
+				{
+					auto it2 = surfaceMap.find(it->second);
+
+					if(it2 != surfaceMap.end())
+					{
+						for(unsigned i = 0; i < global.images.size(); i++)
+						{
+							if(strcmp(global.images[i].ID, it2->second.c_str()) == 0)
+								effect.diffuseColor = i;
+						}
+					}
+				}
 			}
 
 			effect.diffuseAlpha = ~0u;
