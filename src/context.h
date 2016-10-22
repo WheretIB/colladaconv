@@ -218,8 +218,10 @@ struct DAESource
 
 		dataName = 0;
 
+		isConstant = false;
+
 		count = 0;
-		stride = 1;
+		stride = 0;
 	}
 
 	const char *ID;
@@ -229,6 +231,8 @@ struct DAESource
 	char **dataName;
 
 	std::vector<float> dataFloat;
+
+	bool isConstant;
 
 	uint32_t count;
 	uint32_t stride;
@@ -242,6 +246,8 @@ struct DAEAnimation
 	Interpolation *interpolation;
 
 	uint32_t dataCount;
+
+	bool skip;
 
 	char *targetNode;
 	char *targetSID;

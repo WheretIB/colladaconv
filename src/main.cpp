@@ -845,6 +845,21 @@ DAESource ParseSource(pugi::xml_node source, bool specialCaseNameArray = false)
 
 			rawArr = fastatof(rawArr, target[i]);
 		}
+
+		// Check for constant value
+		bool isConstant = true;
+
+		for(unsigned i = 1; i < src.count; i++)
+		{
+			if(memcmp(&target[0], &target[i * src.stride], sizeof(target[0]) * src.stride) != 0)
+			{
+				isConstant = false;
+				break;
+			}
+		}
+
+		if(isConstant)
+			src.isConstant = isConstant;
 	}
 	else
 	{
@@ -1604,8 +1619,70 @@ bool LoadScene()
 
 		if(targetNode == -1)
 		{
+			anim->skip = true;
+
 			LogOptional("There is no node (%s) for animation (%s)\r\n", anim->targetNode, anim->ID);
 			continue;
+		}
+
+		// Ill-formed animation?
+		if(anim->targetSID == NULL)
+		{
+			anim->skip = true;
+
+			LogOptional("Animation %s for node %s doesn't have a target\r\n", anim->ID, anim->targetNode);
+			continue;
+		}
+
+		if(strcmp(anim->targetSID, "visibility") == 0)
+		{
+			anim->skip = true;
+
+			LogOptional("Ignoring visibility animation %s for node %s\r\n", anim->ID, anim->targetNode);
+			continue;
+		}
+
+		auto &target = global.nodes[targetNode];
+
+		if(anim->outSource->isConstant)
+		{
+			mat4 model;
+
+			// Calculate matrices
+			for(unsigned n = 0; n < target.tCount; n++)
+			{
+				mat4 tempTransform;
+
+				switch(target.tForm[n].type)
+				{
+				case DT_MATRIX:
+					memcpy(&tempTransform.mat[0], target.tForm[n].data, 16 * sizeof(float));
+					tempTransform = tempTransform.transpose();
+					break;
+				case DT_ROTATE:
+					tempTransform.rotate(vec3(target.tForm[n].data), target.tForm[n].data[3]);
+					break;
+				case DT_TRANSLATE:
+					tempTransform.translate(vec3(target.tForm[n].data));
+					break;
+				case DT_SCALE:
+					tempTransform.scale(vec3(target.tForm[n].data));
+					break;
+				case DT_LOOKAT:
+				case DT_SKEW:
+					break;
+				}
+
+				model *= tempTransform;
+			}
+
+			if(memcmp(&model, &target.model, sizeof(mat4)) == 0)
+			{
+				anim->skip = true;
+
+				LogOptional("Animation %s for node %s is constant and doesn't change the node\r\n", anim->ID, anim->targetNode);
+				continue;
+			}
 		}
 
 		unsigned found = ~0u;
@@ -1621,9 +1698,9 @@ bool LoadScene()
 			global.animatedNodes.push_back(targetNode);
 
 			idleMat.push_back(TransformBlock());
-			idleMat.back().count = global.nodes[targetNode].tCount;
+			idleMat.back().count = target.tCount;
 
-			memcpy(idleMat.back().block, global.nodes[targetNode].tForm, sizeof(DAETransformBlock));
+			memcpy(idleMat.back().block, target.tForm, sizeof(DAETransformBlock));
 		}
 		else
 		{
@@ -1675,6 +1752,9 @@ bool LoadScene()
 		{
 			DAEAnimation &anim = *anims[i];
 
+			if(anim.skip)
+				continue;
+
 			auto inTime = anim.inSource ? anim.inSource->dataFloat : dummySource;
 			auto outValues = anim.outSource ? anim.outSource->dataFloat : dummySource;
 
@@ -1699,13 +1779,6 @@ bool LoadScene()
 
 			if(mix < 0.0)
 				mix = 0.0;
-
-			// Ill-formed animation?
-			if(anim.targetSID == NULL)
-				continue;
-
-			if(strcmp(anim.targetSID, "visibility") == 0)
-				continue;
 
 			unsigned targetPart = -1;
 
