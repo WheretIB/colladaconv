@@ -53,17 +53,21 @@ const char* fastatof(const char* str, float& ft)
 {
 	unsigned digit;
 	unsigned Left = 0, Right = 0;
-	double sign = 1.0;
+
+	bool negative = false;
+
 	if(str[0] == 'N' && str[1] == 'a' && str[2] == 'N')
 	{
 		ft = 0;
 		return str + 3;
 	}
+
 	if(str[0] == '-')
 	{
-		sign = -1.0;
+		negative = true;
 		str++;
 	}
+
 	while((digit = *str - '0') < 10)
 	{
 		Left = Left * 10 + digit;
@@ -71,6 +75,7 @@ const char* fastatof(const char* str, float& ft)
 	}
 
 	double mul = 1.0;
+
 	if(str[0] == '.')
 	{
 		str++;
@@ -81,19 +86,30 @@ const char* fastatof(const char* str, float& ft)
 			str++;
 		}
 	}
+
+	float num = 0.0f;
+
 	if(str[0] == 'e' || str[0] == 'E')
 	{
 		str++;
-		bool negative = *str == '-';
+		bool negativeExp = *str == '-';
 		unsigned e;
-		str = fastatoui(str + negative, e);
-		if(negative)
-			ft = float(sign * (Left + Right * mul) * pow(10.0, -(double)e));
+		str = fastatoui(str + negativeExp, e);
+
+		if(negativeExp)
+			num = float((Left + Right * mul) * pow(10.0, -(double)e));
 		else
-			ft = float(sign * (Left + Right * mul) * pow(10.0, (double)e));
+			num = float((Left + Right * mul) * pow(10.0, (double)e));
+
+		ft = negative && num != 0.0f ? -num : num;
+
 		return str;
 	}
-	ft = float((Left + Right * mul) * sign);
+
+	num = float((Left + Right * mul));
+
+	ft = negative && num != 0.0f ? -num : num;
+
 	return str;
 }
 
