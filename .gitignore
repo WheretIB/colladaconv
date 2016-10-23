@@ -37,3 +37,13 @@
 *.user
 *.sdf
 *.opensdf
+*.suo
+
+# Sources
+*.txt
+*.xml
+*.dae
+
+# Artifacts
+*.bmi
+*.bgi
