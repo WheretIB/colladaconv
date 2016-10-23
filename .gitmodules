@@ -4,3 +4,6 @@
 [submodule "simplemath"]
 	path = simplemath
 	url = https://github.com/WheretIB/simplemath.git
+[submodule "meshoptimizer"]
+	path = meshoptimizer
+	url = https://github.com/WheretIB/meshoptimizer.git

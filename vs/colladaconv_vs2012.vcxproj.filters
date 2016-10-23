@@ -19,6 +19,9 @@
     <Filter Include="simplemath">
       <UniqueIdentifier>{23c65a7b-b433-4d5b-a4b0-0907586558ce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="meshoptimizer">
+      <UniqueIdentifier>{5f56f10f-e653-4fd2-a8cb-acbae15a033e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\context.h">
@@ -51,6 +54,9 @@
     <ClInclude Include="..\pugixml\src\pugixml.hpp">
       <Filter>pugixml</Filter>
     </ClInclude>
+    <ClInclude Include="..\meshoptimizer\src\meshoptimizer.hpp">
+      <Filter>meshoptimizer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -61,6 +67,21 @@
     </ClCompile>
     <ClCompile Include="..\pugixml\src\pugixml.cpp">
       <Filter>pugixml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\meshoptimizer\src\indexgenerator.cpp">
+      <Filter>meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\meshoptimizer\src\overdrawoptimizer.cpp">
+      <Filter>meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\meshoptimizer\src\posttransformoptimizer.cpp">
+      <Filter>meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\meshoptimizer\src\pretransformoptimizer.cpp">
+      <Filter>meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\meshoptimizer\src\vcacheanalyzer.cpp">
+      <Filter>meshoptimizer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

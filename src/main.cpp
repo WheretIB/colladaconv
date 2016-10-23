@@ -13,6 +13,8 @@
 
 #include "../pugixml/src/pugixml.hpp"
 
+#include "../meshoptimizer/src/meshoptimizer.hpp"
+
 #include "context.h"
 #include "export.h"
 
@@ -593,12 +595,6 @@ namespace std
 
 void CreateIBVB()
 {
-	std::unordered_map<IndexGroup, unsigned> myMap;
-
-	std::unordered_map<vec3, unsigned> posMap;
-	std::unordered_map<vec2, unsigned> uvMap;
-	std::unordered_map<vec3, unsigned> normalMap;
-
 	vec3 currPos;
 	vec2 currUV;
 	vec3 currNormal;
@@ -617,11 +613,11 @@ void CreateIBVB()
 
 		unsigned lastIndex = 0;
 
-		myMap.clear();
+		std::unordered_map<IndexGroup, unsigned> myMap;
 
-		posMap.clear();
-		uvMap.clear();
-		normalMap.clear();
+		std::unordered_map<vec3, unsigned> posMap;
+		std::unordered_map<vec2, unsigned> uvMap;
+		std::unordered_map<vec3, unsigned> normalMap;
 
 		unsigned indices[] = {
 			g->streams[g->streamLink[ST_POSITION] == ~0u ? 0 : g->streamLink[ST_POSITION]].indexOffset,
@@ -731,7 +727,7 @@ void CreateIBVB()
 				g->VB.push_back(Vertex());
 				Vertex &v = g->VB.back();
 
-				g->posIndex.push_back(g->indices[i].indData[indices[0]]);
+				g->posIndex.push_back(indData[indices[0]]);
 
 				memcpy(&v.pos, dataArrs[0] + indData[indices[0]] * strides[0], 4 * 3);
 
@@ -775,7 +771,37 @@ void CreateIBVB()
 		g->bounds.size = (boundMax - boundsMin) / 2.0;
 
 		LogOptional("Geom %d Vertices %d Triangles %d\r\n", n, g->VB.size(), g->IB.size() / 3);
-		LogOptional("Geom %d Remapping %d/%d/%d for %d\r\n", n, remapPos, remapUV, remapNormal, remapVertex);
+		LogOptional("\tRemapping %d/%d/%d for %d\r\n", n, remapPos, remapUV, remapNormal, remapVertex);
+
+		auto original = analyzePostTransform(g->IB.data(), g->IB.size(), g->VB.size(), 32);
+
+		std::vector<uint16_t> reorderedIB;
+		reorderedIB.resize(g->IB.size());
+
+		optimizePostTransform(reorderedIB.data(), g->IB.data(), g->IB.size(), g->VB.size(), 16, NULL);
+
+		std::vector<NamedVertex> sourceVB;
+		sourceVB.resize(g->VB.size());
+
+		for(unsigned i = 0; i < g->VB.size(); i++)
+			sourceVB[i] = NamedVertex(g->posIndex[i], g->VB[i]);
+
+		std::vector<NamedVertex> reorderedVB;
+		reorderedVB.resize(g->VB.size());
+
+		optimizePreTransform(reorderedVB.data(), sourceVB.data(), reorderedIB.data(), reorderedIB.size(), sourceVB.size(), sizeof(NamedVertex));
+
+		auto optimized = analyzePostTransform(reorderedIB.data(), reorderedIB.size(), g->VB.size(), 32);
+
+		g->IB = reorderedIB;
+
+		for(unsigned i = 0; i < reorderedVB.size(); i++)
+		{
+			g->posIndex[i] = reorderedVB[i].id;
+			g->VB[i] = reorderedVB[i].data;
+		}
+
+		LogOptional("\tCache hits. before: %f, after: %f\r\n", original.hit_percent, optimized.hit_percent);
 	}
 }
 

@@ -35,6 +35,20 @@ struct Vertex
 	short normal[4];
 };
 
+struct NamedVertex
+{
+	NamedVertex(): id(0)
+	{
+	}
+
+	NamedVertex(unsigned id, Vertex data): id(id), data(data)
+	{
+	}
+
+	unsigned id;
+	Vertex data;
+};
+
 enum StreamType
 {
 	ST_POSITION,

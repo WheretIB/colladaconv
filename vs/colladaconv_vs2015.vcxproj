@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\meshoptimizer\src\meshoptimizer.hpp" />
     <ClInclude Include="..\pugixml\src\pugiconfig.hpp" />
     <ClInclude Include="..\pugixml\src\pugixml.hpp" />
     <ClInclude Include="..\simplemath\aabb.h" />
@@ -31,6 +32,11 @@
     <ClInclude Include="..\src\export.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\meshoptimizer\src\indexgenerator.cpp" />
+    <ClCompile Include="..\meshoptimizer\src\overdrawoptimizer.cpp" />
+    <ClCompile Include="..\meshoptimizer\src\posttransformoptimizer.cpp" />
+    <ClCompile Include="..\meshoptimizer\src\pretransformoptimizer.cpp" />
+    <ClCompile Include="..\meshoptimizer\src\vcacheanalyzer.cpp" />
     <ClCompile Include="..\pugixml\src\pugixml.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\saver.cpp" />
