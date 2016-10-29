@@ -10,6 +10,7 @@
 #pragma warning(disable: 4996)
 
 #define LOG_VERBOSE
+#define BONE_INFLUENCE_COUNT 3
 
 struct IndexGroup
 {

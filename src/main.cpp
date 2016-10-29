@@ -1240,7 +1240,14 @@ void LoadControllerLibrary()
 				}
 			}
 
-			tmpWaI[3].weight = 0.0f;
+			if(BONE_INFLUENCE_COUNT <= 1)
+				tmpWaI[1].weight = 0.0f;
+
+			if(BONE_INFLUENCE_COUNT <= 2)
+				tmpWaI[2].weight = 0.0f;
+
+			if(BONE_INFLUENCE_COUNT <= 3)
+				tmpWaI[3].weight = 0.0f;
 
 			// Normalize weights
 			float sum = tmpWaI[0].weight + tmpWaI[1].weight + tmpWaI[2].weight + tmpWaI[3].weight;
@@ -1261,12 +1268,13 @@ void LoadControllerLibrary()
 			curr.exWeights[n * 4 + 2] = short(tmpWaI[2].weight * 32767);
 			curr.exWeights[n * 4 + 3] = short(tmpWaI[3].weight * 32767);
 
+			for(unsigned k = 0; k < BONE_INFLUENCE_COUNT; k++)
+				curr.isJointActive[curr.exIndices[n * 4 + k]] = true;
+
 			// center used as minimum
 			// sized used as maximum
 			for(unsigned k = 0; k < curr.vcountData[n]; k++)
 			{
-				curr.isJointActive[curr.vData[indSaved + k * 2]] = true;
-
 				vec3 &min = curr.bounds[curr.vData[indSaved + k * 2]].center;
 				vec3 &max = curr.bounds[curr.vData[indSaved + k * 2]].size;
 
