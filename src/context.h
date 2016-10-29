@@ -198,14 +198,12 @@ struct DAESkeleton
 {
 	DAESkeleton()
 	{
-		rootName = nullptr;
-
 		controllerID = ~0u;
 
 		jointCount = 0;
 	}
 
-	const char *rootName;
+	std::vector<const char*> rootNames;
 	uint32_t controllerID;
 
 	mat4 bindShapeMat;

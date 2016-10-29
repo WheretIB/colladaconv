@@ -1568,18 +1568,18 @@ bool LoadScene()
 				}
 			}
 
-			// Find skeleton
-			pugi::xml_node skeleton = contrl.child("skeleton");
-
-			if(skeleton)
-				LogOptional("Skeleton for %s starts from %s\r\n", targetName, skeleton.child_value() + 1);
-			else
-				LogOptional("Controller %s doesn't have a skeleton reference\r\n", targetName);
-
 			newSkeleton.controllerID = newNode.controllerID;
 			newSkeleton.jointCount = global.contrls[newNode.controllerID]->activeJointCount;
-			newSkeleton.rootName = skeleton.child_value() + 1;
 			newNode.skeletonID = unsigned(global.skeletons.size());
+
+			// Find root nodes for search
+			for(auto skeleton = contrl.child("skeleton"); skeleton; skeleton = skeleton.next_sibling("skeleton"))
+				newSkeleton.rootNames.push_back(skeleton.child_value() + 1);
+
+			if(!newSkeleton.rootNames.empty())
+				LogOptional("Skeleton for %s has %d roots (first start from %s)\r\n", targetName, newSkeleton.rootNames.size(), newSkeleton.rootNames.front());
+			else
+				LogOptional("Controller %s doesn't have a skeleton reference\r\n", targetName);
 
 			global.skeletons.push_back(newSkeleton);
 		}
@@ -1597,19 +1597,6 @@ bool LoadScene()
 	{
 		DAESkeleton &cSkel = global.skeletons[i];
 
-		// find root node
-		unsigned nodeID = 0;
-
-		while(nodeID < global.nodes.size() && strcmp(global.nodes[nodeID].ID, cSkel.rootName) != 0)
-			nodeID++;
-
-		if(nodeID == global.nodes.size())
-		{
-			LogOptional("Root node '%s' for skeleton %d not found, will search whole tree\r\n", cSkel.rootName, i);
-
-			nodeID = 0;
-		}
-
 		// Find every joint position after root node
 		for(unsigned n = 0; n < cSkel.jointCount; n++)
 		{
@@ -1619,14 +1606,55 @@ bool LoadScene()
 
 			char* targetName = controller->joints->dataName[jointID];
 
-			unsigned subID = nodeID;
+			unsigned subID = 0;
 
-			while(subID < global.nodes.size() && (global.nodes[subID].sid == NULL || strcmp(global.nodes[subID].sid, targetName) != 0))
+			while(subID < global.nodes.size())
+			{
+				// Found a match
+				if(global.nodes[subID].sid != NULL && strcmp(global.nodes[subID].sid, targetName) == 0)
+				{
+					if(cSkel.rootNames.empty())
+						break;
+
+					// Check that this is a valid sub-tree
+					auto &node = global.nodes[subID];
+
+					bool valid = false;
+
+					for(;;)
+					{
+						for(unsigned k = 0; k < cSkel.rootNames.size(); k++)
+						{
+							if(strcmp(cSkel.rootNames[k], node.ID) == 0)
+							{
+								valid = true;
+								break;
+							}
+						}
+
+						if(valid)
+							break;
+
+						// Check parent
+						if(node.parentNodeID != -1)
+							node = global.nodes[node.parentNodeID];
+						else
+							break;
+					}
+
+					if(valid)
+						break;
+				}
+
 				subID++;
+			}
 
 			if(subID == global.nodes.size())
 			{
-				LogOptional("Joint node %s for skeleton %d not found in root node %s\r\n", targetName, i, cSkel.rootName);
+				if(cSkel.rootNames.empty())
+					LogPrint("Joint node %s for skeleton %d not found in node tree\r\n", targetName, i);
+				else
+					LogPrint("Joint node %s for skeleton %d not found in any of the root nodes\r\n", targetName, i);
 				return false;
 			}
 
